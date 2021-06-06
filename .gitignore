@@ -1,2 +1,7 @@
 # ignore basic common files
 .idea/
+
+# ignore pycache, etc.
+__pycache__/
+testing notebook.ipynb
+.ipynb_checkpoints/
