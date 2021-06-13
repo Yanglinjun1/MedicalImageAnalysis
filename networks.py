@@ -49,6 +49,7 @@ class Encoder2D(nn.Module):
 
 class Decoder2D(nn.Module):
     def __init__(self, out_chn, conv_type="regular"):
+        super().__init__()
         Conv2d = nn.Conv2d if conv_type == "regular" else Depthwise_Conv2D
         self.up = nn.Sequential(nn.Upsample(scale_factor=2),
                                 Conv2d(2*out_chn, out_chn, kernel_size=3, stride=1, padding=1),
