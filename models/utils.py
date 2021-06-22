@@ -88,11 +88,11 @@ def initialize_weights(m, type = 'kaiming'):
 
     module_class = m.__class__.__name__
     if module_class.find('BatchNorm') != -1:
-        init.normal(m.weight.data, 1.0, 0.02)
-        init.constant(m.bias.data, 0.0)
+        init.normal_(m.weight.data, 1.0, 0.02)
+        init.constant_(m.bias.data, 0.0)
     elif type == "kaiming":
-        init.kaiming_normal(m.weight.data, a=0, mode='fan_in')
+        init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
     elif type == "xavier":
-        init.xavier_normal(m.weight.data, gain=1)
+        init.xavier_normal_(m.weight.data, gain=1)
     elif type == "normal":
-        init.normal(m.weight.data, 0.0, 0.02)
+        init.normal_(m.weight.data, 0.0, 0.02)
