@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn import init
 
 class Depthwise_Conv2D(nn.Module):
     """
@@ -79,3 +80,19 @@ class Decoder2D(nn.Module):
         x1 = F.leaky_relu(self.up(x1))
 
         return self.convblock(torch.cat((x1, x2), dim=1))
+
+
+def initialize_weights(m, type = 'kaiming'):
+    if type not in ["kaiming", "xavier", "normal"]:
+        raise NotImplementedError("Type not implemented; Please choose the following: 'kaiming', 'xavier', 'normal'.")
+
+    module_class = m.__class__.__name__
+    if module_class.find('BatchNorm') != -1:
+        init.normal(m.weight.data, 1.0, 0.02)
+        init.constant(m.bias.data, 0.0)
+    elif type == "kaiming":
+        init.kaiming_normal(m.weight.data, a=0, mode='fan_in')
+    elif type == "xavier":
+        init.xavier_normal(m.weight.data, gain=1)
+    elif type == "normal":
+        init.normal(m.weight.data, 0.0, 0.02)
