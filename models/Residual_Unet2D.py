@@ -12,7 +12,7 @@ class Residual_Unet2D(nn.Module):
         self.encoder3 = Residual_Encoder2D(in_chn=128, out_chn=256, conv_type=conv_type)
         self.encoder4 = Residual_Encoder2D(in_chn=256, out_chn=512, conv_type=conv_type)
 
-        self.centerblock = ConvBlock2D(512, 1024, conv_type)
+        self.centerblock = ConvBlock2D(512, 1024, conv_type=conv_type)
 
         self.decoder4 = Residual_Decoder2D(512, conv_type=conv_type)
         self.decoder3 = Residual_Decoder2D(256, conv_type=conv_type)

@@ -12,7 +12,7 @@ class Unet2D(nn.Module):
         self.encoder3 = Encoder2D(128, 256, conv_type)
         self.encoder4 = Encoder2D(256, 512, conv_type)
 
-        self.center_block = ConvBlock2D(512, 1024, conv_type)
+        self.center_block = ConvBlock2D(512, 1024, conv_type=conv_type)
 
         self.decoder4 = Decoder2D(512, conv_type)
         self.decoder3 = Decoder2D(256, conv_type)
