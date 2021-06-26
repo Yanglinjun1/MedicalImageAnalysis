@@ -49,6 +49,19 @@ class ConvBlock2D(nn.Module):
     def forward(self, x):
         return self.CBL2(self.CBL1(x))
 
+class Residual_ConvBlock2D(nn.Module):
+    """
+    This module implements a residual convolution block; the skip connection spans over two convolutional layers
+    """
+    def __init__(self, num_chn, kernel_size=3, stride=1, padding=1, conv_type="regular"):
+        super().__init__()
+
+        self.CBL1 = CBLayer2D(num_chn, num_chn, kernel_size, stride, padding, conv_type)
+        self.CBL2 = CBLayer2D(num_chn, num_chn, kernel_size, stride, padding, conv_type)
+
+    def forward(self, x):
+        return x + self.CBL2(self.CBL1(x))
+
 class Encoder2D(nn.Module):
     """
     This module implements the encoder part of U-net, which output the result of convblock2D and pooling.
@@ -63,6 +76,19 @@ class Encoder2D(nn.Module):
 
         return x1, x2
 
+class Residual_Encoder2D(nn.Module):
+    def __init__(self, in_chn, out_chn, conv_type="regular"):
+        super().__init__()
+
+        self.CBL = CBLayer2D(in_chn, out_chn, kernel_size=3, stride=1, padding=1, conv_type=conv_type)
+        self.convblock = Residual_ConvBlock2D(out_chn, conv_type=conv_type)
+
+    def forward(self, x):
+        x1 = self.convblock(self.CBL(x))
+        x2 = F.max_pool2d(x1, kernel_size=2)
+
+        return x1, x2
+
 class Decoder2D(nn.Module):
     """
     This module implements the decoder part of U-net: start with the upsampling module
@@ -71,6 +97,7 @@ class Decoder2D(nn.Module):
     def __init__(self, out_chn, conv_type="regular"):
         super().__init__()
         Conv2d = nn.Conv2d if conv_type == "regular" else Depthwise_Conv2D
+
         self.up = nn.Sequential(nn.Upsample(scale_factor=2),
                                 Conv2d(2*out_chn, out_chn, kernel_size=3, stride=1, padding=1),
                                 nn.BatchNorm2d(num_features=out_chn))
@@ -81,6 +108,21 @@ class Decoder2D(nn.Module):
 
         return self.convblock(torch.cat((x1, x2), dim=1))
 
+class Residual_Decoder2D(nn.Module):
+    def __init__(self, out_chn, conv_type="regular"):
+        super().__init__()
+        Conv2d = nn.Conv2d if conv_type == "regular" else Depthwise_Conv2D
+
+        self.up = nn.Sequential(nn.Upsample(scale_factor=2),
+                                Conv2d(2*out_chn, out_chn, kernel_size=3, stride=1, padding=1),
+                                nn.BatchNorm2d(num_features=out_chn))
+        self.CBL = CBLayer2D(2*out_chn, out_chn, kernel_size=3, stride=1, padding=1, conv_type=conv_type)
+        self.convblock = Residual_ConvBlock2D(out_chn, conv_type=conv_type)
+
+    def forward(self, x1, x2):
+        x1 = F.leaky_relu(self.up(x1))
+
+        return self.convblock(self.CBL(torch.cat((x1, x2), dim=1)))
 
 def initialize_weights(m, type = 'kaiming'):
     if type not in ["kaiming", "xavier", "normal"]:
@@ -96,3 +138,7 @@ def initialize_weights(m, type = 'kaiming'):
         init.xavier_normal_(m.weight.data, gain=1)
     elif type == "normal":
         init.normal_(m.weight.data, 0.0, 0.02)
+        
+def return_params_num(model):
+    
+    return sum([p.numel() for p in model.parameters()])
