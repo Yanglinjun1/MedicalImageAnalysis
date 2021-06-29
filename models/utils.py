@@ -124,6 +124,35 @@ class Residual_Decoder2D(nn.Module):
 
         return self.convblock(self.CBL(torch.cat((x1, x2), dim=1)))
 
+class Attention_Gate2D(nn.Module):
+    def __init__(self, feat_chn, gate_chn, inter_chn, ds_rate=2, conv_type="regular"):
+        super().__init__()
+        Conv2d = nn.Conv2d if conv_type == "regular" else Depthwise_Conv2D
+
+        self.Theta = Conv2d(feat_chn, inter_chn, kernel_size=ds_rate, stride=ds_rate, padding=0)
+        self.Phi = Conv2d(gate_chn, inter_chn, kernel_size=1, stride=1, padding=0)
+        self.Psi = Conv2d(inter_chn, 1, kernel_size=1, stride=1, padding=0)
+
+        self.W = nn.Sequential(Conv2d(feat_chn, feat_chn, kernel_size=1, stride=1, padding=0),
+                               nn.BatchNorm2d(num_features=feat_chn))
+
+    def forward(self, x, g):
+        input_size = x.size()
+        theta_x = self.Theta(x)
+        inter_spatial = theta_x.size()[2:]
+
+        phi_g = F.interpolate(self.Phi(g), size=inter_spatial, mode='bilinear')
+        f = F.leaky_relu(theta_x+phi_g)
+
+        grid = torch.sigmoid(self.Psi(f))
+        grid = F.interpolate(grid, size=input_size[2:], mode='bilinear')
+
+        y = grid.expand_as(x) * x
+        out = self.W(y)
+
+        return out, grid
+
+
 def initialize_weights(m, type = 'kaiming'):
     if type not in ["kaiming", "xavier", "normal"]:
         raise NotImplementedError("Type not implemented; Please choose the following: 'kaiming', 'xavier', 'normal'.")

@@ -34,9 +34,9 @@ class Unet2D(nn.Module):
         x2, x3 = self.encoder2(x2)
         x3, x4 = self.encoder3(x3)
         x4, x5 = self.encoder4(x4)
-        x5 = self.center_block(x5)
+        d5 = self.center_block(x5)
 
-        d4 = self.decoder4(x5, x4)
+        d4 = self.decoder4(d5, x4)
         d3 = self.decoder3(d4, x3)
         d2 = self.decoder2(d3, x2)
         d1 = self.decoder1(d2, x1)
