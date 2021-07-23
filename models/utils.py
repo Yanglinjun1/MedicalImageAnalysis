@@ -32,7 +32,7 @@ class CBLayer2D(nn.Module):
         self.bn = nn.BatchNorm2d(num_features=out_chn)
 
     def forward(self, x):
-        out = F.leaky_relu(self.bn(self.conv(x)))
+        out = F.leaky_relu(self.bn(self.conv(x)), inplace=True)
 
         return out
 
@@ -133,8 +133,8 @@ class Attention_Gate2D(nn.Module):
         self.Phi = Conv2d(gate_chn, inter_chn, kernel_size=1, stride=1, padding=0)
         self.Psi = Conv2d(inter_chn, 1, kernel_size=1, stride=1, padding=0)
 
-        self.W = nn.Sequential(Conv2d(feat_chn, feat_chn, kernel_size=1, stride=1, padding=0),
-                               nn.BatchNorm2d(num_features=feat_chn))
+        '''self.W = nn.Sequential(Conv2d(feat_chn, feat_chn, kernel_size=1, stride=1, padding=0),
+                               nn.BatchNorm2d(num_features=feat_chn))'''
 
     def forward(self, x, g):
         input_size = x.size()
@@ -148,9 +148,9 @@ class Attention_Gate2D(nn.Module):
         grid = F.interpolate(grid, size=input_size[2:], mode='bilinear')
 
         y = grid.expand_as(x) * x
-        out = self.W(y)
+        '''out = self.W(y)'''
 
-        return out, grid
+        return y, grid
 
 
 def initialize_weights(m, type = 'kaiming'):
